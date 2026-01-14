@@ -29,16 +29,16 @@ sudo rm -rf var/importexport/* && sudo chmod -R 777 var/cache var/page_cache var
 For creating admin user
 ------------------------------
 
-sudo php bin/magento admin:user:create --admin-user=kunal.shakyav7 --admin-password=sst12345678 --admin-email=Demo@test.com --admin-firstname=Test --admin-lastname=Demo
+sudo php bin/magento admin:user:create --admin-user=kunal.shakyaAp --admin-password=sst12345678 --admin-email=Demo@test.com --admin-firstname=Test --admin-lastname=Demo
 
 Coding standard check 
 ------------------------
-vendor/bin/phpcs --standard=Magento2 app/code/PluginPartner/CreateOrderApi
-vendor/bin/phpcs --standard=Magento2 --extensions=php --report=full --no-cache -q app/code/PluginPartner/DeliveryDate
+vendor/bin/phpcs --standard=Magento2 app/code/Vendor/Module
+vendor/bin/phpcs --standard=Magento2 --extensions=php --report=full --no-cache -q app/code/Vendor/Module
 
 for fix issues
 
-vendor/bin/phpcbf --standard=Magento2 --extensions=php app/code/PluginPartner/DeliveryDate
+vendor/bin/phpcbf --standard=Magento2 --extensions=php app/code/Vendor/Module
 
 
 for XML updates only
