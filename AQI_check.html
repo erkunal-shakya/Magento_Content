@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>City Air Quality Checker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #020617;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.1);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --error: #f97373;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #1d283a 0%, #020617 50%, #000 100%);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 520px;
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.98));
+            border-radius: 24px;
+            padding: 24px 22px 20px;
+            box-shadow:
+                0 32px 80px rgba(0, 0, 0, 0.75),
+                0 0 0 1px rgba(148, 163, 184, 0.16);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .title-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 20%, #38bdf8, #0ea5e9 40%, #0f172a 100%);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.05rem;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .chip {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        /* Search area */
+        .search {
+            margin-top: 8px;
+            margin-bottom: 14px;
+        }
+
+        .search-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-row input {
+            flex: 1;
+            padding: 11px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            background: rgba(15, 23, 42, 0.85);
+            outline: none;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .search-row input::placeholder {
+            color: rgba(148, 163, 184, 0.8);
+        }
+
+        .search-row input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+        }
+
+        /* Result card */
+        .result-card {
+            margin-top: 10px;
+            border-radius: 20px;
+            padding: 16px 14px 12px;
+            background: radial-gradient(circle at top, #0b1120 0%, #020617 55%, #020617 90%);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            display: none; /* shown after search */
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .city-name {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .updated-time {
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .aqi-tag {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+
+        .aqi-value-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .aqi-value {
+            font-size: 2.4rem;
+            font-weight: 700;
+        }
+
+        .aqi-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .aqi-desc {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .bar-wrapper {
+            margin-top: 4px;
+            margin-bottom: 6px;
+        }
+
+        .aqi-bar {
+            width: 100%;
+            height: 6px;
+            border-radius: 999px;
+            background: linear-gradient(
+                90deg,
+                #22c55e,
+                #a3e635,
+                #eab308,
+                #f97316,
+                #ef4444,
+                #a855f7
+            );
+            position: relative;
+            overflow: hidden;
+        }
+
+        .aqi-indicator {
+            position: absolute;
+            top: -4px;
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            border: 2px solid #f9fafb;
+            background: #020617;
+            box-shadow: 0 0 0 4px rgba(248, 250, 252, 0.1);
+            transform: translateX(-50%);
+        }
+
+        .scale {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 0.65rem;
+            color: var(--muted);
+        }
+
+        /* Extra info badges */
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        /* Helper / error text */
+        .helper {
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .error {
+            margin-top: 6px;
+            color: var(--error);
+            font-size: 0.78rem;
+        }
+
+        @media (max-width: 480px) {
+            .app {
+                padding: 18px 16px 16px;
+                border-radius: 18px;
+            }
+            .title {
+                font-size: 1.2rem;
+            }
+            .subtitle {
+                display: none;
+            }
+            .aqi-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="app-header">
+        <div>
+            <div class="title">
+                <span class="title-icon">AQ</span>
+                <span>Air Quality Checker</span>
+            </div>
+            <div class="subtitle">Start typing a city name to see live AQI levels*</div>
+        </div>
+        <div class="chip">OpenWeather • Live</div>
+    </div>
+
+    <div class="search">
+        <div class="search-label">City name (auto search)</div>
+        <div class="search-row">
+            <input
+                type="text"
+                id="cityInput"
+                placeholder="e.g. Delhi, Mumbai, Bengaluru"
+            />
+        </div>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <div id="resultCard" class="result-card">
+        <div class="result-header">
+            <div>
+                <div class="city-name" id="cityName"></div>
+                <div class="updated-time" id="updatedTime"></div>
+            </div>
+            <div id="aqiTag" class="aqi-tag">Loading…</div>
+        </div>
+
+        <div class="aqi-value-row">
+            <div class="aqi-value" id="aqiValue">--</div>
+            <div>
+                <div class="aqi-label" id="aqiCategory">--</div>
+                <div class="aqi-desc" id="aqiMessage">Air quality info will appear here.</div>
+            </div>
+        </div>
+
+        <div class="bar-wrapper">
+            <div class="aqi-bar">
+                <div id="aqiIndicator" class="aqi-indicator"></div>
+            </div>
+            <div class="scale">
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5</span>
+            </div>
+        </div>
+
+        <div class="badges">
+            <div class="badge" id="badgeAdvice">—</div>
+            <div class="badge" id="badgePm25">PM₂.₅: -- μg/m³</div>
+            <div class="badge" id="badgePm10">PM₁₀: -- μg/m³</div>
+        </div>
+
+        <div class="helper">
+            * Based on OpenWeather Air Pollution API (Index 1–5: Good → Very Poor).
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========================
+    // CONFIG – PUT YOUR KEY!!
+    // ========================
+    // 1) Sign up at https://openweathermap.org
+    // 2) Copy your API key and paste below:
+
+    const API_KEY = "dd3be95cb673bb9b348d46efdb44f682"; // <-- CHANGE THIS
+
+    const GEO_URL = "https://api.openweathermap.org/geo/1.0/direct";
+    const AIR_URL = "https://api.openweathermap.org/data/2.5/air_pollution";
+
+    const cityInput = document.getElementById("cityInput");
+    const errorBox = document.getElementById("error");
+
+    const resultCard = document.getElementById("resultCard");
+    const cityNameEl = document.getElementById("cityName");
+    const updatedTimeEl = document.getElementById("updatedTime");
+    const aqiTag = document.getElementById("aqiTag");
+    const aqiValueEl = document.getElementById("aqiValue");
+    const aqiCategoryEl = document.getElementById("aqiCategory");
+    const aqiMessageEl = document.getElementById("aqiMessage");
+    const badgeAdviceEl = document.getElementById("badgeAdvice");
+    const badgePm25El = document.getElementById("badgePm25");
+    const badgePm10El = document.getElementById("badgePm10");
+    const aqiIndicator = document.getElementById("aqiIndicator");
+
+    // Typing debounce
+    let typingTimer = null;
+    const TYPING_DELAY = 800; // ms after last keystroke
+    const MIN_CHARS = 3;      // minimum city name length before searching
+
+    // OpenWeather AQI scale:
+    // 1 = Good, 2 = Fair, 3 = Moderate, 4 = Poor, 5 = Very Poor
+    function classifyAQI(aqi) {
+        switch (aqi) {
+            case 1:
+                return {
+                    category: "Good",
+                    message: "Air quality is considered satisfactory.",
+                    advice: "Enjoy outdoor activities.",
+                    color: "#22c55e"
+                };
+            case 2:
+                return {
+                    category: "Fair",
+                    message: "Acceptable air quality; a small number of sensitive people may feel minor effects.",
+                    advice: "Sensitive groups can reduce very long outdoor exertion.",
+                    color: "#a3e635"
+                };
+            case 3:
+                return {
+                    category: "Moderate",
+                    message: "Some pollutants may cause health issues for sensitive groups.",
+                    advice: "Children, elderly & heart/lung patients should limit long outdoor exposure.",
+                    color: "#eab308"
+                };
+            case 4:
+                return {
+                    category: "Poor",
+                    message: "Health effects may be experienced; serious for sensitive groups.",
+                    advice: "Limit outdoor activities; consider a mask outside.",
+                    color: "#f97316"
+                };
+            case 5:
+                return {
+                    category: "Very Poor",
+                    message: "Significant health risk for everyone.",
+                    advice: "Avoid outdoor activities; stay indoors with filtered air.",
+                    color: "#ef4444"
+                };
+            default:
+                return {
+                    category: "Unknown",
+                    message: "AQI value is not available.",
+                    advice: "Try again later or another location.",
+                    color: "#6b7280"
+                };
+        }
+    }
+
+    // Position indicator along the 1–5 scale (mapped to 0–100%)
+    function positionIndicator(aqi) {
+        let clamped = Math.max(1, Math.min(aqi, 5));
+        let percent = ((clamped - 1) / 4) * 100; // 1 => 0%, 5 => 100%
+        aqiIndicator.style.left = percent + "%";
+    }
+
+    async function fetchCoords(city) {
+        const url = `${GEO_URL}?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Geo API error");
+        const data = await res.json();
+        if (!data || data.length === 0) {
+            throw new Error("City not found");
+        }
+        return data[0]; // { name, lat, lon, country, state? }
+    }
+
+    async function fetchAQI(lat, lon) {
+        const url = `${AIR_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Air API error");
+        const data = await res.json();
+        if (!data || !data.list || data.list.length === 0) {
+            throw new Error("No AQI data");
+        }
+        return data.list[0]; // { main: {aqi}, components: {...}, dt }
+    }
+
+    function formatTimeFromUnix(unixSeconds) {
+        if (!unixSeconds) return "";
+        const d = new Date(unixSeconds * 1000);
+        return "Updated: " + d.toLocaleString();
+    }
+
+    async function handleCheck(city) {
+        errorBox.textContent = "";
+        resultCard.style.display = "none";
+
+        if (!city) {
+            return; // nothing typed
+        }
+
+        if (city.length < MIN_CHARS) {
+            return; // too short, don't spam API
+        }
+
+        if (!API_KEY || API_KEY === "YOUR_OPENWEATHERMAP_API_KEY_HERE") {
+        errorBox.textContent = "Please set your OpenWeatherMap API key in the code first.";
+        return;
+    }
+
+        // Show small inline status in tag
+        aqiTag.textContent = "Loading…";
+        aqiTag.style.border = "1px solid rgba(148, 163, 184, 0.5)";
+        aqiTag.style.color = "#e5e7eb";
+
+        try {
+            // 1) Get coordinates from city
+            const geo = await fetchCoords(city);
+            const { lat, lon, name, country, state } = geo;
+
+            // 2) Get AQI from coordinates
+            const airData = await fetchAQI(lat, lon);
+            const aqi = airData.main.aqi;
+            const comps = airData.components || {};
+            const pm25 = comps.pm2_5 ?? "--";
+            const pm10 = comps.pm10 ?? "--";
+
+            const info = classifyAQI(aqi);
+
+            const displayName = [name, state, country].filter(Boolean).join(", ");
+
+            cityNameEl.textContent = displayName || city;
+            updatedTimeEl.textContent = formatTimeFromUnix(airData.dt);
+            aqiValueEl.textContent = aqi;
+            aqiCategoryEl.textContent = info.category;
+            aqiMessageEl.textContent = info.message;
+            badgeAdviceEl.textContent = info.advice;
+            badgePm25El.textContent = "PM₂.₅: " + pm25 + " μg/m³";
+            badgePm10El.textContent = "PM₁₀: " + pm10 + " μg/m³";
+
+            aqiTag.textContent = info.category;
+            aqiTag.style.backgroundColor = "rgba(15, 23, 42, 0.9)";
+            aqiTag.style.border = "1px solid " + info.color;
+            aqiTag.style.color = info.color;
+
+            positionIndicator(aqi);
+
+            resultCard.style.display = "block";
+        } catch (e) {
+            console.error(e);
+            errorBox.textContent =
+                'Could not fetch AQI for "' +
+                city +
+                '". Please check the city name or try another.';
+        }
+    }
+
+    // Auto search on typing with debounce
+    cityInput.addEventListener("input", function () {
+        const city = cityInput.value.trim();
+        errorBox.textContent = "";
+        resultCard.style.display = "none";
+
+        if (typingTimer) {
+            clearTimeout(typingTimer);
+        }
+
+        // If input is empty, do nothing
+        if (!city) {
+            aqiTag.textContent = "Loading…";
+            return;
+        }
+
+        typingTimer = setTimeout(() => {
+            handleCheck(city);
+        }, TYPING_DELAY);
+    });
+</script>
+</body>
+</html>
